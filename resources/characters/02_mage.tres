@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/character_data.gd" id="1_character_data"]
+
+[resource]
+script = ExtResource("1_character_data")
+id = "mage"
+display_name = "Mage"
+description = "Fragile, but she deletes a monster pack before it reaches the front line. Keep her behind the knight."
+accent_color = Color(0.42, 0.55, 0.95, 1)
+model_scene = null
+model_scale = 1.0
+model_offset = Vector3(0, 0, 0)
+model_yaw_offset_deg = 0.0
+head_height = 1.55
+anim_idle = "idle"
+anim_walk = "walk"
+anim_run = "run"
+anim_jump = "jump"
+anim_fall = "fall"
+max_health = 80
+walk_speed = 4.4
+run_speed = 7.4
+jump_velocity = 7.0
+attack_damage = 22

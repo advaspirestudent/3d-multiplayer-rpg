@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/character_data.gd" id="1_character_data"]
+
+[resource]
+script = ExtResource("1_character_data")
+id = "knight"
+display_name = "Knight"
+description = "Heavy plate and a steady shield. Slow on his feet, but he is the one who survives the boss's opening swing."
+accent_color = Color(0.85, 0.35, 0.32, 1)
+model_scene = null
+model_scale = 1.0
+model_offset = Vector3(0, 0, 0)
+model_yaw_offset_deg = 0.0
+head_height = 1.6
+anim_idle = "idle"
+anim_walk = "walk"
+anim_run = "run"
+anim_jump = "jump"
+anim_fall = "fall"
+max_health = 140
+walk_speed = 4.0
+run_speed = 6.8
+jump_velocity = 6.8
+attack_damage = 14

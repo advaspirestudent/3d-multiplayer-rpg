@@ -1,0 +1,1744 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Build guide for the 3d-multiplayer-rpg Godot project: scenes, scripts, character import, facing direction, local multiplayer testing and map design."><title>Godot RPG Field Guide</title>
+<style>
+  :root {
+    --bg: #EDF0F4;
+    --surface: #FFFFFF;
+    --surface-2: #F4F7FA;
+    --ink: #131A22;
+    --ink-soft: #35404D;
+    --muted: #5C6875;
+    --rule: #D2DAE3;
+    --rule-soft: #E4E9EF;
+    --accent: #2F6FB5;
+    --accent-ink: #245A96;
+    --accent-soft: #E3ECF7;
+    --ok: #3D7C31;
+    --ok-soft: #E2EFDD;
+    --bad: #AE3A30;
+    --bad-soft: #F7E5E3;
+    --code-bg: #F4F7FA;
+    --shadow: 0 1px 2px rgba(19,26,34,.05), 0 10px 28px rgba(19,26,34,.06);
+
+    --font-display: Bahnschrift, "DIN Alternate", "Franklin Gothic Medium", "Helvetica Neue", system-ui, sans-serif;
+    --font-body: Corbel, Candara, Optima, "Segoe UI", system-ui, sans-serif;
+    --font-mono: Consolas, "Cascadia Mono", "SF Mono", ui-monospace, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11161C;
+      --surface: #19202A;
+      --surface-2: #1E2732;
+      --ink: #DEE6EF;
+      --ink-soft: #BFCAD6;
+      --muted: #8D9AA9;
+      --rule: #2C3541;
+      --rule-soft: #232B36;
+      --accent: #74AEE8;
+      --accent-ink: #9AC6F1;
+      --accent-soft: #1A2A3B;
+      --ok: #86C46E;
+      --ok-soft: #1C2B1B;
+      --bad: #E4796D;
+      --bad-soft: #33201E;
+      --code-bg: #141B23;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.28);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #11161C;
+    --surface: #19202A;
+    --surface-2: #1E2732;
+    --ink: #DEE6EF;
+    --ink-soft: #BFCAD6;
+    --muted: #8D9AA9;
+    --rule: #2C3541;
+    --rule-soft: #232B36;
+    --accent: #74AEE8;
+    --accent-ink: #9AC6F1;
+    --accent-soft: #1A2A3B;
+    --ok: #86C46E;
+    --ok-soft: #1C2B1B;
+    --bad: #E4796D;
+    --bad-soft: #33201E;
+    --code-bg: #141B23;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.28);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 32px 96px;
+    display: grid;
+    grid-template-columns: 208px minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    grid-column: 1 / -1;
+    border-bottom: 2px solid var(--ink);
+    padding: 56px 0 24px;
+    margin-bottom: 8px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: .78rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 14px;
+  }
+
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    line-height: 1.02;
+    letter-spacing: -.015em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: 1.12rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  .masthead-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin-top: 24px;
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    color: var(--muted);
+  }
+
+  /* ---------- table of contents ---------- */
+
+  .toc {
+    position: sticky;
+    top: 24px;
+    font-family: var(--font-display);
+    font-size: .88rem;
+    padding-top: 40px;
+  }
+
+  .toc h2 {
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+
+  .toc ol { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+  .toc a { color: var(--ink-soft); text-decoration: none; display: block; border-left: 2px solid var(--rule); padding-left: 11px; }
+  .toc a:hover, .toc a:focus-visible { color: var(--accent); border-left-color: var(--accent); }
+
+  /* ---------- body ---------- */
+
+  main { min-width: 0; padding-top: 40px; }
+
+  section { margin-bottom: 60px; scroll-margin-top: 24px; }
+
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.85rem;
+    letter-spacing: -.01em;
+    line-height: 1.15;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.22rem;
+    letter-spacing: -.005em;
+    margin: 34px 0 8px;
+    text-wrap: balance;
+  }
+
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 26px 0 6px;
+  }
+
+  .step-no {
+    font-family: var(--font-mono);
+    font-size: .8rem;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 4px;
+    letter-spacing: .08em;
+  }
+
+  p { margin: 0 0 16px; max-width: 68ch; }
+  main ul, main ol { max-width: 68ch; padding-left: 22px; margin: 0 0 16px; }
+  main li { margin-bottom: 7px; }
+
+  a { color: var(--accent); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: .855em;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    padding: .12em .38em;
+    border-radius: 3px;
+  }
+
+  strong { color: var(--ink); font-weight: 700; }
+
+  kbd {
+    font-family: var(--font-mono);
+    font-size: .8em;
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink);
+    padding: .06em .42em;
+    white-space: nowrap;
+  }
+
+  /* ---------- code blocks ---------- */
+
+  figure.code { margin: 22px 0; }
+
+  .code-head {
+    font-family: var(--font-mono);
+    font-size: .74rem;
+    letter-spacing: .04em;
+    color: var(--muted);
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    padding: 7px 13px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .code-head span:last-child { color: var(--accent); }
+
+  pre {
+    margin: 0;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 0 0 5px 5px;
+    padding: 15px 17px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: .83rem;
+    line-height: 1.62;
+    color: var(--ink-soft);
+    tab-size: 4;
+  }
+
+  pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* ---------- callouts ---------- */
+
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 14px 18px;
+    margin: 22px 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note .tag {
+    font-family: var(--font-display);
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  .note.warn { border-left-color: var(--bad); background: var(--bad-soft); }
+  .note.warn .tag { color: var(--bad); }
+
+  /* ---------- node tree ---------- */
+
+  .tree {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 20px 22px;
+    margin: 22px 0;
+    overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+
+  .tree table { border-collapse: collapse; font-size: .84rem; width: 100%; }
+  .tree td { padding: 4px 0; vertical-align: baseline; }
+  .tree td:first-child { font-family: var(--font-mono); white-space: pre; padding-right: 28px; color: var(--ink); }
+  .tree td:last-child { color: var(--muted); font-size: .95em; }
+  .tree .type { color: var(--accent); }
+
+  /* ---------- handshake ---------- */
+
+  .handshake {
+    margin: 24px 0;
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    background: var(--surface);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .handshake-head {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    font-family: var(--font-display);
+    font-size: .74rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--rule);
+  }
+  .handshake-head div { padding: 9px 18px; }
+  .handshake-head div:first-child { color: var(--accent); border-right: 1px solid var(--rule); }
+  .handshake-head div:last-child { color: var(--ok); }
+
+  .handshake ol { list-style: none; margin: 0; padding: 0; max-width: none; }
+  .handshake li {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--rule-soft);
+    margin: 0;
+    font-size: .87rem;
+  }
+  .handshake li:last-child { border-bottom: none; }
+  .handshake .cell { padding: 11px 18px; }
+  .handshake .cell:first-child { border-right: 1px solid var(--rule); }
+  .handshake .idle { color: var(--muted); opacity: .55; }
+  .handshake .n {
+    font-family: var(--font-mono);
+    font-size: .74rem;
+    color: var(--accent);
+    margin-right: 8px;
+  }
+  .handshake code { background: none; padding: 0; color: var(--ink); }
+
+  /* ---------- facing diagram ---------- */
+
+  .facing {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin: 24px 0;
+  }
+
+  .facing figure {
+    margin: 0;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .facing svg { width: 100%; height: auto; display: block; }
+
+  .facing figcaption {
+    font-family: var(--font-mono);
+    font-size: .78rem;
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  .verdict {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-size: .72rem;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 7px;
+  }
+  .verdict.no { background: var(--bad-soft); color: var(--bad); }
+  .verdict.yes { background: var(--ok-soft); color: var(--ok); }
+
+  /* ---------- tables ---------- */
+
+  .table-wrap { overflow-x: auto; margin: 22px 0; }
+
+  table.data {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .88rem;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+  }
+  table.data th {
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: .74rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  table.data td { padding: 9px 14px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  table.data tr:last-child td { border-bottom: none; }
+  table.data td:first-child { font-family: var(--font-mono); font-size: .84rem; white-space: nowrap; color: var(--ink); }
+
+  /* ---------- misc ---------- */
+
+  .rule-heavy { border: none; border-top: 2px solid var(--ink); margin: 0 0 34px; max-width: none; }
+
+  .part-label {
+    font-family: var(--font-display);
+    font-size: .74rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+
+  footer {
+    grid-column: 1 / -1;
+    border-top: 2px solid var(--ink);
+    padding-top: 20px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: .78rem;
+  }
+
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  @media (max-width: 1040px) {
+    .page { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 22px 72px; }
+    .toc {
+      position: static;
+      padding: 26px 0 0;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 22px;
+    }
+    .toc ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 7px 18px; }
+    main { padding-top: 34px; }
+    .handshake li, .handshake-head { grid-template-columns: 1fr; }
+    .handshake .cell:first-child, .handshake-head div:first-child { border-right: none; }
+    .handshake .idle { display: none; }
+  }
+  .theme-toggle {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 10;
+    font-family: var(--font-display);
+    font-size: .74rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 7px 12px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+  }
+  .theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  @media print { .theme-toggle { display: none; } }
+</style>
+
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" type="button">Theme</button>
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">Godot 4.4 · Project build guide</p>
+    <h1>Godot RPG Field&nbsp;Guide</h1>
+    <p class="standfirst">How the <code>3d-multiplayer-rpg</code> project is put together — every scene, every script, and why each piece is shaped the way it is. Then: swapping in your own character models, getting them to face the right way, testing two players on one machine, and building your own maps.</p>
+    <div class="masthead-meta">
+      <span>Godot 4.4.1 · Forward+</span>
+      <span>GDScript</span>
+      <span>ENet · MultiplayerSpawner · MultiplayerSynchronizer</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <h2>Part 1 · The build</h2>
+    <ol>
+      <li><a href="#overview">Shape of the project</a></li>
+      <li><a href="#tree">The scene tree</a></li>
+      <li><a href="#autoloads">Autoloads</a></li>
+      <li><a href="#characterdata">CharacterData</a></li>
+      <li><a href="#player">Player &amp; camera rig</a></li>
+      <li><a href="#ui">The three UI screens</a></li>
+      <li><a href="#main">main.gd, the conductor</a></li>
+      <li><a href="#handshake">The network handshake</a></li>
+    </ol>
+    <h2>Part 2 · Working with it</h2>
+    <ol>
+      <li><a href="#models">Import your own model</a></li>
+      <li><a href="#facing">Get facing right</a></li>
+      <li><a href="#testing">Test multiplayer locally</a></li>
+      <li><a href="#maps">Design your own maps</a></li>
+      <li><a href="#mapselect">Add map selection</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ============ PART 1 ============ -->
+
+    <section id="overview">
+      <p class="part-label">Part 1 · The build</p>
+      <hr class="rule-heavy">
+      <h2>The shape of the project</h2>
+      <p>Three ideas carry the whole thing. Everything else is detail.</p>
+
+      <h4>1 · The root scene never unloads</h4>
+      <p><code>main.tscn</code> is the running scene from launch to quit. Menus show and hide inside it; the map is added <em>inside</em> it. Nothing ever calls <code>change_scene_to_file()</code>. That matters because Godot's multiplayer replicates by <strong>node path</strong> — if the host says "spawn a player at <code>World/Players</code>", that path has to exist on every client at that exact moment. A root scene that never goes away is the simplest way to guarantee it.</p>
+
+      <h4>2 · Only players are networked</h4>
+      <p>The map is generated identically on every machine from a fixed seed, so not one byte of level geometry crosses the wire. The only replicated objects are the player bodies. This is why the game feels instant on a LAN.</p>
+
+      <h4>3 · Characters are data, not code</h4>
+      <p>A playable character is a <code>.tres</code> resource file, discovered by scanning a folder. Adding your fourth character never touches a script.</p>
+
+      <div class="note">
+        <span class="tag">The one rule to remember</span>
+        <p>Every peer runs the same code and builds the same world. The network only carries <em>who is playing</em>, <em>as what</em>, and <em>where they are</em>. When you extend this project, keep asking: can this be derived locally instead of sent?</p>
+      </div>
+    </section>
+
+    <section id="tree">
+      <span class="step-no">STEP 01</span>
+      <h2>The scene tree</h2>
+      <p>Here is <code>main.tscn</code> in full. It is small on purpose.</p>
+
+      <div class="tree">
+        <table>
+          <tr><td>Main <span class="type">(Node)</span></td><td>runs main.gd — screen flow + spawning</td></tr>
+          <tr><td>├── World <span class="type">(Node3D)</span></td><td>everything that exists in 3D</td></tr>
+          <tr><td>│   ├── MapRoot <span class="type">(Node3D)</span></td><td>the map scene gets added here</td></tr>
+          <tr><td>│   ├── Players <span class="type">(Node3D)</span></td><td>spawned player bodies land here</td></tr>
+          <tr><td>│   └── PlayerSpawner <span class="type">(MultiplayerSpawner)</span></td><td>spawn_path = ../Players</td></tr>
+          <tr><td>└── UI <span class="type">(CanvasLayer)</span></td><td>draws on top of the 3D view</td></tr>
+          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;├── MainMenu</td><td>instance of main_menu.tscn</td></tr>
+          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;├── CharacterSelect</td><td>instance of character_select.tscn</td></tr>
+          <tr><td>&nbsp;&nbsp;&nbsp;&nbsp;└── HUD</td><td>instance of hud.tscn</td></tr>
+        </table>
+      </div>
+
+      <h3>Why these particular nodes</h3>
+      <p><strong>MapRoot and Players are separate</strong> so that leaving a world can free the map and the players independently, and so that a future map switch never disturbs the spawn path.</p>
+
+      <p><strong>PlayerSpawner</strong> is a <code>MultiplayerSpawner</code>. Its single configured property is <code>spawn_path</code>, pointing at <code>../Players</code>. When the server calls <code>spawner.spawn(data)</code>, Godot creates the node locally <em>and</em> tells every connected client to create it too. Late joiners get every already-spawned player automatically — you do not have to write catch-up code.</p>
+
+      <p><strong>UI is a CanvasLayer</strong>, not a plain Control. A CanvasLayer draws independently of the 3D camera, so the HUD stays put no matter where the player looks.</p>
+
+      <h3>Building it yourself</h3>
+      <p>If you were recreating this from an empty project: new scene → root type <code>Node</code>, named <code>Main</code>. Add <code>Node3D</code> named <code>World</code>. Inside it add two more <code>Node3D</code>s named <code>MapRoot</code> and <code>Players</code>, then add a <code>MultiplayerSpawner</code> named <code>PlayerSpawner</code>. Select it and, in the inspector, set <strong>Spawn Path</strong> to <code>../Players</code>. Add a <code>CanvasLayer</code> named <code>UI</code> as a sibling of <code>World</code>, and drag your three UI scenes into it. Save as <code>res://scenes/main.tscn</code> and set it as the main scene in <em>Project → Project Settings → Application → Run</em>.</p>
+
+      <div class="note warn">
+        <span class="tag">Easy mistake</span>
+        <p>The <code>MultiplayerSpawner</code>'s <em>Auto Spawn List</em> (the inspector array of scenes) is for the simple case where the spawner instantiates a scene with no arguments. We do not use it — we set <code>spawn_function</code> in code instead, because each player needs a name, a character, an authority and a position. Leave the auto-spawn list empty.</p>
+      </div>
+    </section>
+
+    <section id="autoloads">
+      <span class="step-no">STEP 02</span>
+      <h2>Autoloads: GameState and NetworkManager</h2>
+      <p>Two singletons, registered in <em>Project Settings → Globals → Autoload</em>. Order matters: <strong>GameState must be above NetworkManager</strong>, because NetworkManager reads the player's chosen character out of GameState when hosting.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>project.godot</span><span>autoload</span></div>
+<pre><code>[autoload]
+
+GameState="*res://scripts/autoload/game_state.gd"
+NetworkManager="*res://scripts/autoload/network_manager.gd"</code></pre>
+      </figure>
+
+      <h3>GameState — the character roster</h3>
+      <p>Its whole job is: know every available character, and remember what the local player picked. The interesting part is that it finds characters by <em>scanning a directory</em> rather than by a hardcoded list.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/autoload/game_state.gd</span><span>excerpt</span></div>
+<pre><code>const CHARACTER_DIR := "res://resources/characters"
+
+var characters: Array[CharacterData] = []
+var player_name: String = "Player"
+var selected_character_id: String = ""
+
+func reload_characters() -> void:
+    characters.clear()
+    var dir := DirAccess.open(CHARACTER_DIR)
+    if dir == null:
+        push_warning("No character folder at %s" % CHARACTER_DIR)
+        return
+    var files := dir.get_files()
+    files.sort()
+    for file in files:
+        # Exported builds rename resources to *.remap.
+        var file_name := file.trim_suffix(".remap")
+        if not (file_name.ends_with(".tres") or file_name.ends_with(".res")):
+            continue
+        var res: Resource = load(CHARACTER_DIR.path_join(file_name))
+        if res is CharacterData:
+            characters.append(res)</code></pre>
+      </figure>
+
+      <p>Two details worth copying into your own projects. <code>files.sort()</code> makes the order deterministic — that is why the resources are named <code>01_knight</code>, <code>02_mage</code>, <code>03_rogue</code>, so you control the order on the select screen by renaming files. And the <code>.remap</code> handling matters once you export the game: Godot renames resources during export, and a directory scan that ignores this works in the editor and silently finds nothing in the shipped build.</p>
+
+      <h3>NetworkManager — the peer and the roster</h3>
+      <p>It owns the ENet peer and a dictionary of who is connected. It deliberately knows <em>nothing</em> about the 3D world; it emits signals and lets <code>main.gd</code> decide what to do.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/autoload/network_manager.gd</span><span>excerpt</span></div>
+<pre><code>signal server_started
+signal connection_succeeded
+signal connection_failed(reason: String)
+signal server_disconnected
+signal player_registered(peer_id: int)
+signal player_removed(peer_id: int)
+signal roster_changed
+
+const DEFAULT_PORT := 7777
+const MAX_PLAYERS := 16
+
+## peer_id -> { "name": String, "character": String }
+var roster: Dictionary = {}
+
+func host_game(port: int = DEFAULT_PORT) -> Error:
+    var peer := ENetMultiplayerPeer.new()
+    var err := peer.create_server(port, MAX_PLAYERS)
+    if err != OK:
+        connection_failed.emit("Could not open port %d (error %d)." % [port, err])
+        return err
+    multiplayer.multiplayer_peer = peer
+    is_online = true
+    roster.clear()
+    roster[1] = {
+        "name": GameState.player_name,
+        "character": GameState.selected_character_id,
+    }
+    server_started.emit()
+    roster_changed.emit()
+    player_registered.emit(1)
+    return OK</code></pre>
+      </figure>
+
+      <p>The host is always <strong>peer 1</strong> in Godot. Notice that the host registers itself into the roster by hand and immediately emits <code>player_registered(1)</code> — the host never goes through the network handshake, so without this line the host would never spawn a body for itself.</p>
+
+      <h3>The handshake RPCs</h3>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/autoload/network_manager.gd</span><span>excerpt</span></div>
+<pre><code>## Called by main.gd once the client has its world loaded.
+func send_registration() -> void:
+    _register.rpc_id(1, GameState.player_name, GameState.selected_character_id)
+
+@rpc("any_peer", "call_remote", "reliable")
+func _register(display_name: String, character_id: String) -> void:
+    if not multiplayer.is_server():
+        return
+    var peer_id := multiplayer.get_remote_sender_id()
+    # Validate: never trust a client-supplied character id.
+    var character := GameState.get_character_or_default(character_id)
+    roster[peer_id] = {
+        "name": display_name.strip_edges().left(20),
+        "character": character.id if character != null else "",
+    }
+    _sync_roster.rpc(roster)
+    roster_changed.emit()
+    player_registered.emit(peer_id)
+
+@rpc("authority", "call_remote", "reliable")
+func _sync_roster(new_roster: Dictionary) -> void:
+    roster = new_roster
+    roster_changed.emit()</code></pre>
+      </figure>
+
+      <p>Read the <code>@rpc</code> annotations carefully, because they are the security model:</p>
+      <ul>
+        <li><code>@rpc("any_peer")</code> means any client may call this on the server. Anything marked this way is an <strong>attack surface</strong> — hence the explicit <code>is_server()</code> guard, the length clamp on the name, and validating the character id against the known list instead of storing whatever was sent.</li>
+        <li><code>@rpc("authority")</code> means <em>only</em> the server may call it. The roster broadcast is one-directional by design.</li>
+        <li><code>"reliable"</code> means ENet retries until it arrives. Use it for events that must not be dropped. Continuous state like position uses unreliable delivery instead, which the MultiplayerSynchronizer handles for you.</li>
+      </ul>
+    </section>
+
+    <section id="characterdata">
+      <span class="step-no">STEP 03</span>
+      <h2>CharacterData — characters as data</h2>
+      <p>A custom <code>Resource</code> subclass. Because it declares <code>class_name</code>, Godot registers it engine-wide and it appears in the <em>Create Resource</em> dialog and the inspector like a built-in type.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/character_data.gd</span><span>abridged</span></div>
+<pre><code>class_name CharacterData
+extends Resource
+
+@export_group("Identity")
+@export var id: String = ""
+@export var display_name: String = "Character"
+@export_multiline var description: String = ""
+@export var accent_color: Color = Color(0.6, 0.7, 1.0)
+
+@export_group("Model")
+## Your imported character scene. Leave empty for a placeholder capsule.
+@export var model_scene: PackedScene
+@export var model_scale: float = 1.0
+@export var model_offset: Vector3 = Vector3.ZERO
+@export var model_yaw_offset_deg: float = 0.0
+@export var head_height: float = 1.55
+
+@export_group("Animation Names")
+@export var anim_idle: String = "idle"
+@export var anim_walk: String = "walk"
+@export var anim_run: String = "run"
+@export var anim_jump: String = "jump"
+@export var anim_fall: String = "fall"
+
+@export_group("Stats")
+@export var max_health: int = 100
+@export var walk_speed: float = 4.5
+@export var run_speed: float = 8.0
+@export var jump_velocity: float = 7.0
+@export var attack_damage: int = 12</code></pre>
+      </figure>
+
+      <p><code>@export_group</code> is cosmetic but earns its keep — it turns a flat wall of twenty fields into four collapsible sections in the inspector.</p>
+
+      <p>The field that travels over the network is <code>id</code>. Everything else is looked up locally from that id, which is why the string is worth being careful with:</p>
+
+      <div class="note warn">
+        <span class="tag">Don't change an id later</span>
+        <p><code>id</code> is the only part of a character that crosses the wire. Renaming <code>"knight"</code> to <code>"paladin"</code> after players have saved characters means those saves point at nothing. Rename <code>display_name</code> freely; treat <code>id</code> as permanent.</p>
+      </div>
+    </section>
+
+    <section id="player">
+      <span class="step-no">STEP 04</span>
+      <h2>The player scene and its camera rig</h2>
+
+      <div class="tree">
+        <table>
+          <tr><td>Player <span class="type">(CharacterBody3D)</span></td><td>layer 2, mask 1 — collides with world, not other players</td></tr>
+          <tr><td>├── CollisionShape3D</td><td>capsule, 1.8 m tall, 0.4 m radius, raised 0.9 m</td></tr>
+          <tr><td>├── ModelRoot <span class="type">(Node3D)</span></td><td>your character model gets added here at runtime</td></tr>
+          <tr><td>├── NameTag <span class="type">(Label3D)</span></td><td>billboarded, hidden for your own character</td></tr>
+          <tr><td>├── CameraPivot <span class="type">(Node3D)</span></td><td>yaw + pitch live here</td></tr>
+          <tr><td>│   └── SpringArm3D</td><td>pulls the camera in when a wall is behind you</td></tr>
+          <tr><td>│       └── Camera3D</td><td>at the arm's end</td></tr>
+          <tr><td>└── MultiplayerSynchronizer</td><td>replicates sync_position / sync_yaw / sync_anim</td></tr>
+        </table>
+      </div>
+
+      <h3>The camera trick worth stealing</h3>
+      <p>A camera parented to the character normally inherits the character's rotation — so when the body turns to face its movement direction, the camera swings with it and the view becomes nauseating. The fix is one line in <code>_ready()</code>:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>_ready</span></div>
+<pre><code>if _is_local:
+    add_to_group("local_player")
+    name_tag.visible = false
+    # Detaching the pivot from the body keeps the camera stable while the
+    # character turns underneath it.
+    camera_pivot.top_level = true
+    camera.current = true
+    set_view_mode(ViewMode.THIRD_PERSON)
+else:
+    # Remote players do not need a camera rig at all.
+    camera_pivot.queue_free()</code></pre>
+      </figure>
+
+      <p><code>top_level = true</code> makes a node ignore its parent's transform entirely. The pivot is still a child in the tree, but its position and rotation are now world-space and ours to set. So each frame we place it by hand:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>_process</span></div>
+<pre><code>func _update_camera(_delta: float) -> void:
+    if not is_instance_valid(camera_pivot):
+        return
+    camera_pivot.global_position = global_position + Vector3.UP * _head_height
+    camera_pivot.global_rotation = Vector3(pitch, yaw, 0.0)
+    if view_mode == ViewMode.THIRD_PERSON:
+        spring_arm.spring_length = tp_zoom</code></pre>
+      </figure>
+
+      <p>The other half of that snippet — <code>camera_pivot.queue_free()</code> for remote players — is a habit worth forming. In an eight-player game you otherwise have eight cameras rendering nothing.</p>
+
+      <h3>Switching first and third person</h3>
+      <p>Both modes use the same rig. Third person extends the spring arm and offsets it over the shoulder; first person collapses the arm to zero and nudges the camera forward past the model's face.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>view modes</span></div>
+<pre><code>func set_view_mode(mode: ViewMode) -> void:
+    view_mode = mode
+    if not _is_local or not is_instance_valid(spring_arm):
+        return
+    if mode == ViewMode.FIRST_PERSON:
+        spring_arm.spring_length = 0.0
+        spring_arm.position = Vector3.ZERO
+        camera.position = Vector3(0.0, 0.0, -FP_FORWARD_OFFSET)
+        _set_model_visible(false)
+    else:
+        spring_arm.spring_length = tp_zoom
+        spring_arm.position = Vector3(TP_SHOULDER_OFFSET, 0.0, 0.0)
+        camera.position = Vector3.ZERO
+        _set_model_visible(true)
+    view_mode_changed.emit(mode)</code></pre>
+      </figure>
+
+      <p>In first person the model is not hidden with <code>visible = false</code>. It is switched to <strong>shadows-only</strong>, so you still cast a correct shadow on the ground and other players still see a complete character:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>shadows-only trick</span></div>
+<pre><code>func _set_model_visible(visible_to_owner: bool) -> void:
+    if _model == null:
+        return
+    var mode := (
+        GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+        if visible_to_owner
+        else GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+    )
+    _apply_shadow_mode(_model, mode)</code></pre>
+      </figure>
+
+      <h3>Movement, and who simulates it</h3>
+      <p>Each peer simulates only its own character. <code>_physics_process</code> branches on authority:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>movement</span></div>
+<pre><code>func _physics_process(delta: float) -> void:
+    if _is_local:
+        _simulate_local(delta)
+    else:
+        _follow_remote(delta)
+    _update_animation()
+
+func _simulate_local(delta: float) -> void:
+    var input_locked := Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+    var input_dir := Vector2.ZERO
+    if not input_locked:
+        input_dir = Input.get_vector("move_left", "move_right",
+                                     "move_forward", "move_back")
+
+    # Movement is relative to where the camera is looking.
+    var cam_basis := Basis(Vector3.UP, yaw)
+    var direction := (cam_basis * Vector3(input_dir.x, 0.0, input_dir.y)).normalized()
+    var sprinting := not input_locked and Input.is_action_pressed("sprint")
+    var target_speed := run_speed if sprinting else walk_speed
+    var target_velocity := direction * target_speed
+
+    var accel: float = GROUND_ACCEL if is_on_floor() else AIR_ACCEL
+    velocity.x = move_toward(velocity.x, target_velocity.x, accel * delta)
+    velocity.z = move_toward(velocity.z, target_velocity.z, accel * delta)
+
+    if is_on_floor():
+        if not input_locked and Input.is_action_just_pressed("jump"):
+            velocity.y = jump_velocity
+    else:
+        velocity.y -= _gravity * delta
+
+    move_and_slide()
+
+    # Facing: locked to the camera in first person, follows motion otherwise.
+    if view_mode == ViewMode.FIRST_PERSON:
+        rotation.y = yaw
+    elif direction.length_squared() &gt; 0.01:
+        var facing := atan2(-direction.x, -direction.z)
+        rotation.y = lerp_angle(rotation.y, facing, TURN_SPEED * delta)
+
+    sync_position = global_position
+    sync_yaw = rotation.y
+    sync_anim = _resolve_anim_state(sprinting)</code></pre>
+      </figure>
+
+      <p><code>Input.get_vector</code> returns <code>y = -1</code> for forward, which lines up with Godot's <strong>-Z is forward</strong> convention, so feeding it straight into <code>Vector3(x, 0, y)</code> gives a correct world direction. The <code>atan2(-x, -z)</code> on the facing line is the subject of <a href="#facing">its own section below</a> — it is the single easiest thing in this project to get backwards.</p>
+
+      <h3>Smoothing remote players</h3>
+      <p>The MultiplayerSynchronizer delivers position updates at network rate, not frame rate. Applied directly, other players stutter. So the replicated value is a <em>target</em> and the visible node chases it:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>remote smoothing</span></div>
+<pre><code>func _follow_remote(delta: float) -> void:
+    var weight := clampf(REMOTE_SMOOTHING * delta, 0.0, 1.0)
+    # Snap instead of sliding across the map after a teleport or a long stall.
+    if global_position.distance_squared_to(sync_position) &gt; 100.0:
+        global_position = sync_position
+    else:
+        global_position = global_position.lerp(sync_position, weight)
+    rotation.y = lerp_angle(rotation.y, sync_yaw, weight)</code></pre>
+      </figure>
+
+      <p>This is why the synchronizer replicates <code>sync_position</code> and <code>sync_yaw</code> rather than <code>position</code> and <code>rotation</code> directly. If it wrote to the real transform, there would be nothing left to interpolate towards.</p>
+
+      <h3>What the synchronizer replicates</h3>
+      <p>Select the <code>MultiplayerSynchronizer</code> node and the replication panel opens at the bottom of the editor. Three properties are configured:</p>
+
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Property</th><th>Mode</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>sync_position</td><td>Always</td><td>Changes constantly while moving; send every tick.</td></tr>
+            <tr><td>sync_yaw</td><td>Always</td><td>Same.</td></tr>
+            <tr><td>sync_anim</td><td>On Change</td><td>An enum that changes a few times a second at most — only send on transitions.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Authority is what decides who may write these. It is assigned at spawn, in <code>main.gd</code>, and — critically — <strong>before the node enters the tree</strong>, so the synchronizer sees the right owner from its very first frame.</p>
+    </section>
+
+    <section id="ui">
+      <span class="step-no">STEP 05</span>
+      <h2>The three UI screens</h2>
+      <p>Each screen is its own scene, instanced into <code>UI</code>. None of them know about each other or about networking — they raise signals, and <code>main.gd</code> wires them together. That is what keeps them re-orderable.</p>
+
+      <h3>Main menu</h3>
+      <p>Structure is a full-rect <code>ColorRect</code> background, a <code>CenterContainer</code>, and a <code>VBoxContainer</code> column holding the title, a two-column <code>GridContainer</code> of labelled fields, and the buttons.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/ui/main_menu.gd</span><span>complete</span></div>
+<pre><code>extends Control
+
+signal play_requested(mode: String, address: String, port: int)
+signal quit_requested
+
+@onready var name_edit: LineEdit = %NameEdit
+@onready var address_edit: LineEdit = %AddressEdit
+@onready var port_spin: SpinBox = %PortSpin
+@onready var status_label: Label = %StatusLabel
+
+func _ready() -> void:
+    name_edit.text = GameState.player_name
+    port_spin.value = NetworkManager.DEFAULT_PORT
+    %HostButton.pressed.connect(_on_host_pressed)
+    %JoinButton.pressed.connect(_on_join_pressed)
+    %QuitButton.pressed.connect(func() -> void: quit_requested.emit())
+
+func set_status(message: String) -> void:
+    status_label.text = message
+
+func _commit_name() -> bool:
+    var chosen := name_edit.text.strip_edges()
+    if chosen.is_empty():
+        set_status("Enter a player name first.")
+        return false
+    GameState.player_name = chosen.left(20)
+    return true
+
+func _on_host_pressed() -> void:
+    if not _commit_name():
+        return
+    set_status("")
+    play_requested.emit("host", "", int(port_spin.value))
+
+func _on_join_pressed() -> void:
+    if not _commit_name():
+        return
+    var address := address_edit.text.strip_edges()
+    if address.is_empty():
+        set_status("Enter the server address to join.")
+        return
+    set_status("")
+    play_requested.emit("join", address, int(port_spin.value))</code></pre>
+      </figure>
+
+      <p>The <code>%NodeName</code> syntax is Godot 4's <strong>scene-unique names</strong>. Tick <em>Access as Unique Name</em> on a node in the scene dock and you can reach it with <code>%Name</code> from anywhere in that scene, no matter how deeply you later re-nest it. In a UI built from containers — where you <em>will</em> re-nest things — this saves constant path breakage.</p>
+
+      <h3>Character select</h3>
+      <p>This is the most interesting screen, because the cards are built in code and each one contains a live 3D viewport.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/ui/character_select.gd</span><span>the preview viewport</span></div>
+<pre><code>func _build_preview(data: CharacterData) -&gt; SubViewportContainer:
+    var container := SubViewportContainer.new()
+    container.custom_minimum_size = Vector2(PREVIEW_SIZE)
+    container.stretch = true
+    container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+    var viewport := SubViewport.new()
+    viewport.size = PREVIEW_SIZE
+    viewport.own_world_3d = true
+    viewport.transparent_bg = true
+    viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+    container.add_child(viewport)
+
+    var world := Node3D.new()
+    viewport.add_child(world)
+
+    var environment := Environment.new()
+    environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+    environment.ambient_light_color = Color(0.55, 0.6, 0.72)
+    environment.ambient_light_energy = 1.4
+    var world_environment := WorldEnvironment.new()
+    world_environment.environment = environment
+    world.add_child(world_environment)
+
+    var light := DirectionalLight3D.new()
+    light.rotation = Vector3(deg_to_rad(-35.0), deg_to_rad(35.0), 0.0)
+    light.light_energy = 1.4
+    world.add_child(light)
+
+    var camera := Camera3D.new()
+    camera.position = Vector3(0.0, 1.15, 2.7)
+    camera.rotation = Vector3(deg_to_rad(-6.0), 0.0, 0.0)
+    camera.fov = 45.0
+    camera.current = true
+    world.add_child(camera)
+
+    var pivot := Node3D.new()
+    world.add_child(pivot)
+    pivot.add_child(_instantiate_model(data))
+
+    container.set_meta("pivot", pivot)
+    return container</code></pre>
+      </figure>
+
+      <p><code>own_world_3d = true</code> is the key property. Without it, every preview viewport would render the <em>game</em> world. With it, each card gets a private little 3D scene — which is also why each one needs its own light and environment, since it cannot borrow the game's.</p>
+
+      <p>The pivot node is stored as metadata so <code>_process</code> can spin it, faster for the selected card:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/ui/character_select.gd</span><span>rotation + selection</span></div>
+<pre><code>func _process(delta: float) -&gt; void:
+    if not visible:
+        return
+    for card in _cards:
+        var pivot: Node3D = card["pivot"]
+        if is_instance_valid(pivot):
+            # The selected character turns faster so the eye lands on it.
+            var speed := 0.9 if card["id"] == _selected_id else 0.25
+            pivot.rotate_y(speed * delta)
+
+func _select(character_id: String) -&gt; void:
+    _selected_id = character_id
+    for card in _cards:
+        card["button"].button_pressed = card["id"] == character_id
+    var data := GameState.get_character(character_id)
+    if data == null:
+        return
+    description_label.text = data.description</code></pre>
+      </figure>
+
+      <p>And <code>refresh()</code> rescans the character folder every time the screen opens, which is why a newly added <code>.tres</code> shows up without restarting the game.</p>
+
+      <h3>HUD</h3>
+      <p>The root Control has <code>mouse_filter = Ignore</code> so clicks pass through to the game — but note that this only affects the root itself, so the pause menu's buttons inside it still work normally.</p>
+
+      <p>The HUD finds the local player through a group rather than a node path, which keeps it decoupled from where players are spawned:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/ui/hud.gd</span><span>excerpt</span></div>
+<pre><code>func _process(_delta: float) -&gt; void:
+    if not visible:
+        return
+    if not is_instance_valid(_player):
+        _player = get_tree().get_first_node_in_group("local_player") as Player
+    if _player == null:
+        %ViewLabel.text = "Spawning..."
+        %Crosshair.hide()
+        return
+
+    var first_person := _player.view_mode == Player.ViewMode.FIRST_PERSON
+    %ViewLabel.text = "View: %s   (V to switch)" % (
+        "First person" if first_person else "Third person"
+    )
+    %Crosshair.visible = first_person and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED</code></pre>
+      </figure>
+
+      <p>Escape opens the pause panel and releases the mouse; clicking on the world re-captures it. That pair of behaviours lives in <code>hud.gd</code>'s <code>_unhandled_input</code>, and the player script ignores all input whenever the mouse is not captured — which is what stops your character from running around while you are clicking menu buttons.</p>
+    </section>
+
+    <section id="main">
+      <span class="step-no">STEP 06</span>
+      <h2>main.gd, the conductor</h2>
+      <p>Every connection in the project is made in one <code>_ready()</code>. If you want to know how the game is wired, this is the only place you have to read.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/main.gd</span><span>_ready</span></div>
+<pre><code>func _ready() -&gt; void:
+    spawner.spawn_function = _spawn_player
+
+    NetworkManager.server_started.connect(_on_server_started)
+    NetworkManager.connection_succeeded.connect(_on_connection_succeeded)
+    NetworkManager.connection_failed.connect(_on_connection_failed)
+    NetworkManager.server_disconnected.connect(_on_server_disconnected)
+    NetworkManager.player_registered.connect(_on_player_registered)
+    NetworkManager.player_removed.connect(_on_player_removed)
+
+    main_menu.play_requested.connect(_on_play_requested)
+    main_menu.quit_requested.connect(func() -&gt; void: get_tree().quit())
+    character_select.confirmed.connect(_on_character_confirmed)
+    character_select.cancelled.connect(_show_main_menu)
+    hud.leave_requested.connect(_leave_to_menu)
+
+    _show_main_menu()
+    _apply_command_line()</code></pre>
+      </figure>
+
+      <h3>The spawn function</h3>
+      <p>This is the heart of the multiplayer. It runs on <strong>every peer</strong> — the server runs it when it calls <code>spawn()</code>, and each client runs it when the replicated data arrives.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/main.gd</span><span>spawning</span></div>
+<pre><code>func _player_node_name(peer_id: int) -&gt; String:
+    return "P%d" % peer_id
+
+## Runs on every peer: the server calls it through MultiplayerSpawner.spawn()
+## and clients replay it with the same data.
+func _spawn_player(data: Dictionary) -&gt; Node:
+    var peer_id := int(data.get("peer", 1))
+    var player: Player = PLAYER_SCENE.instantiate()
+    player.name = _player_node_name(peer_id)
+    player.player_name = String(data.get("name", "Player"))
+    player.character_id = String(data.get("character", ""))
+    player.position = data.get("position", Vector3.UP)
+    player.set_multiplayer_authority(peer_id)
+    return player</code></pre>
+      </figure>
+
+      <p>Four rules are packed into those eight lines:</p>
+      <ul>
+        <li><strong>Set every property before returning.</strong> The spawner adds the node to the tree after your function returns, so anything set here is guaranteed to be in place before <code>_ready()</code> runs. That is how <code>character_id</code> is available in time for the model to be built.</li>
+        <li><strong>Name the node deterministically.</strong> <code>P7</code> on the host must be <code>P7</code> on every client, because the synchronizer matches nodes by path. The <code>P</code> prefix avoids a node name that is purely numeric.</li>
+        <li><strong>Set authority before the node enters the tree</strong>, for the same reason.</li>
+        <li><strong>Only send plain data.</strong> The dictionary is serialised across the network, so it holds ints, strings and a Vector3 — never a node reference or a loaded resource.</li>
+      </ul>
+
+      <p>The server side is correspondingly small:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/main.gd</span><span>server reacts</span></div>
+<pre><code>func _on_player_registered(peer_id: int) -&gt; void:
+    if not multiplayer.is_server():
+        return
+    var spawn_position := Vector3(0.0, 1.5, 0.0)
+    if _map != null and _map.has_method("get_spawn_point"):
+        spawn_position = _map.get_spawn_point(_spawn_index)
+    _spawn_index += 1
+    spawner.spawn({
+        "peer": peer_id,
+        "name": NetworkManager.get_display_name(peer_id),
+        "character": NetworkManager.get_character_id(peer_id),
+        "position": spawn_position,
+    })</code></pre>
+      </figure>
+
+      <p>Note <code>_map.has_method("get_spawn_point")</code>. That duck-typed check is the entire contract between the game and a map — <a href="#maps">any scene that implements that one method</a> can be a map.</p>
+
+      <h3>Entering and leaving</h3>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/main.gd</span><span>world lifecycle</span></div>
+<pre><code>func _enter_world() -&gt; void:
+    if _map == null:
+        _map = MAP_SCENE.instantiate()
+        map_root.add_child(_map)
+    hud.show()
+    main_menu.hide()
+    character_select.hide()
+    Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func _leave_to_menu() -&gt; void:
+    NetworkManager.leave_game()
+    for child in players_root.get_children():
+        child.queue_free()
+    if _map != null:
+        _map.queue_free()
+        _map = null
+    _spawn_index = 0
+    main_menu.set_status("")
+    _show_main_menu()</code></pre>
+      </figure>
+
+      <p>Leaving tears down players and map but leaves <code>Main</code>, <code>World</code> and the spawner untouched — so you can host, leave, and join somewhere else without a single scene reload.</p>
+    </section>
+
+    <section id="handshake">
+      <span class="step-no">STEP 07</span>
+      <h2>The network handshake</h2>
+      <p>The ordering here is the part people get wrong. A client must not announce itself until it can receive spawns, or player bodies arrive before there is anywhere to put them.</p>
+
+      <div class="handshake">
+        <div class="handshake-head">
+          <div>Host · peer 1</div>
+          <div>Joining client</div>
+        </div>
+        <ol>
+          <li>
+            <div class="cell"><span class="n">01</span><code>host_game()</code> opens the ENet server on port 7777.</div>
+            <div class="cell idle">—</div>
+          </li>
+          <li>
+            <div class="cell"><span class="n">02</span>Adds itself to the roster as peer 1, emits <code>player_registered(1)</code>, loads the map, spawns its own body.</div>
+            <div class="cell idle">—</div>
+          </li>
+          <li>
+            <div class="cell idle">—</div>
+            <div class="cell"><span class="n">03</span><code>join_game()</code> creates an ENet client and connects.</div>
+          </li>
+          <li>
+            <div class="cell idle">waiting</div>
+            <div class="cell"><span class="n">04</span><code>connected_to_server</code> fires. The client loads the map <strong>first</strong>, then calls <code>send_registration()</code>.</div>
+          </li>
+          <li>
+            <div class="cell"><span class="n">05</span><code>_register</code> arrives. Validates the name and character id, stores them in the roster.</div>
+            <div class="cell idle">—</div>
+          </li>
+          <li>
+            <div class="cell"><span class="n">06</span>Broadcasts the full roster with <code>_sync_roster.rpc()</code> so every HUD updates.</div>
+            <div class="cell idle">—</div>
+          </li>
+          <li>
+            <div class="cell"><span class="n">07</span>Emits <code>player_registered(peer)</code>; <code>main.gd</code> calls <code>spawner.spawn()</code>.</div>
+            <div class="cell idle">—</div>
+          </li>
+          <li>
+            <div class="cell idle">—</div>
+            <div class="cell"><span class="n">08</span>Receives the spawn, plus one for every player already in the world. Runs <code>_spawn_player</code> for each.</div>
+          </li>
+          <li>
+            <div class="cell"><span class="n">09</span>On disconnect: <code>peer_disconnected</code> → roster erased, re-broadcast, body freed.</div>
+            <div class="cell idle">—</div>
+          </li>
+        </ol>
+      </div>
+
+      <p>Step 4 is the load-bearing one:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/main.gd</span><span>ordering</span></div>
+<pre><code>func _on_connection_succeeded() -&gt; void:
+    _enter_world()
+    # Only introduce ourselves once the world exists, so incoming spawns have
+    # somewhere to land.
+    NetworkManager.send_registration()</code></pre>
+      </figure>
+    </section>
+
+    <!-- ============ PART 2 ============ -->
+
+    <section id="models">
+      <p class="part-label">Part 2 · Working with it</p>
+      <hr class="rule-heavy">
+      <h2>Importing your own character model</h2>
+
+      <p>Right now all three characters render as coloured capsules, because <code>model_scene</code> is empty and <code>player.gd</code> falls back to a built-in placeholder. Here is the full swap.</p>
+
+      <h4>1 · Get the file into the project</h4>
+      <p>Create <code>res://models/</code> and copy your <code>.glb</code> or <code>.gltf</code> in — either through the OS file manager (Godot imports on next focus) or by dragging into the FileSystem dock. <strong>glTF is strongly preferred over FBX</strong>; FBX needs an external converter and imports less predictably.</p>
+
+      <h4>2 · Check the import settings</h4>
+      <p>Double-click the imported file to open the <em>Advanced Import Settings</em> dialog. What matters here: your animations appear in the list on the left, and each one has a name. Write those names down exactly — you need them in step 4. If your model came as one long take, this dialog is also where you slice it into clips.</p>
+
+      <h4>3 · Point a character at it</h4>
+      <p>In <code>res://resources/characters/</code>, click <code>01_knight.tres</code>. In the inspector, drag your imported scene into <strong>Model → Model Scene</strong>. Save with <kbd>Ctrl+S</kbd>.</p>
+
+      <h4>4 · Fill in the animation names</h4>
+      <p>Under <strong>Animation Names</strong>, type the clip names exactly as they appear in your model's AnimationPlayer — commonly things like <code>Idle</code>, <code>Walking</code>, <code>Running</code>. Leave a field blank to skip that state. The lookup is defensive, so a wrong name is silently ignored rather than crashing:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>animation lookup</span></div>
+<pre><code>func _update_animation() -&gt; void:
+    if _anim_player == null or _data == null:
+        return
+    var wanted := ""
+    match sync_anim:
+        AnimState.IDLE: wanted = _data.anim_idle
+        AnimState.WALK: wanted = _data.anim_walk
+        AnimState.RUN:  wanted = _data.anim_run
+        AnimState.JUMP: wanted = _data.anim_jump
+        AnimState.FALL: wanted = _data.anim_fall
+    if wanted.is_empty() or not _anim_player.has_animation(wanted):
+        return
+    if _anim_player.current_animation != wanted:
+        _anim_player.play(wanted)</code></pre>
+      </figure>
+
+      <p>You do not have to find the AnimationPlayer yourself — <code>player.gd</code> searches the imported model recursively for the first one it contains.</p>
+
+      <h4>5 · Fix the scale and the footing</h4>
+      <p>The collision capsule is <strong>1.8 m tall with a 0.4 m radius</strong>, and its bottom sits at local y = 0. Your model's feet must land there too.</p>
+
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Symptom</th><th>Field to adjust</th></tr></thead>
+          <tbody>
+            <tr><td>Model is tiny or gigantic</td><td><code>model_scale</code> — Blender exports at 1 unit = 1 m, so usually 1.0. A model authored in centimetres needs 0.01.</td></tr>
+            <tr><td>Floating above the ground</td><td><code>model_offset</code> — lower Y, e.g. <code>Vector3(0, -0.1, 0)</code>.</td></tr>
+            <tr><td>Sunk into the floor</td><td><code>model_offset</code> — raise Y.</td></tr>
+            <tr><td>Camera inside the head in first person</td><td><code>head_height</code> — set to your model's actual eye level in metres.</td></tr>
+            <tr><td>Facing the wrong way</td><td><code>model_yaw_offset_deg</code> — see the next section.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>6 · Add a fourth character</h4>
+      <p>Right-click in <code>res://resources/characters/</code> → <em>New Resource</em> → search <strong>CharacterData</strong>. Save it as <code>04_yourname.tres</code>. Give it a unique <code>id</code> and fill in the fields. It will appear on the select screen the next time that screen opens — no code, no restart.</p>
+
+      <div class="note">
+        <span class="tag">Naming controls order</span>
+        <p>Cards are ordered by filename, because <code>game_state.gd</code> sorts the directory listing. Rename the files to reorder the select screen.</p>
+      </div>
+    </section>
+
+    <section id="facing">
+      <h2>Making sure the model faces the right way</h2>
+
+      <p>There are <strong>two separate</strong> facing problems, and they look identical on screen. Diagnosing which one you have saves a lot of time.</p>
+
+      <h3>Problem A — the code's rotation math</h3>
+      <p>This is the bug that was in the project until it got fixed, and it is worth understanding because it explains the confusing symptom of <em>both</em> forward/back <em>and</em> left/right seeming reversed at once.</p>
+
+      <p>In Godot, a node's forward axis is <strong>-Z</strong>. Rotate a node by yaw <code>t</code> around Y and its forward vector becomes <code>(-sin t, 0, -cos t)</code>. So to make it face a direction <code>(x, 0, z)</code> you need <code>t = atan2(-x, -z)</code>. Using <code>atan2(x, z)</code> instead gives you a yaw exactly 180° off:</p>
+
+      <div class="facing">
+        <figure>
+          <svg viewBox="0 0 240 210" role="img" aria-label="Top-down view: movement arrow points up-screen, character nose points down-screen">
+            <defs>
+              <marker id="ar-bad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+              </marker>
+            </defs>
+            <g stroke="var(--rule)" stroke-width="1">
+              <path d="M20 120 H220 M120 24 V196"/>
+            </g>
+            <text x="222" y="115" fill="var(--muted)" font-family="monospace" font-size="9" text-anchor="end">+X</text>
+            <text x="126" y="34" fill="var(--muted)" font-family="monospace" font-size="9">-Z</text>
+            <line x1="120" y1="96" x2="120" y2="34" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#ar-bad)"/>
+            <text x="130" y="62" fill="var(--accent)" font-family="monospace" font-size="9">W pressed</text>
+            <g transform="translate(120 120) rotate(180)">
+              <circle cx="0" cy="0" r="17" fill="var(--bad-soft)" stroke="var(--bad)" stroke-width="2"/>
+              <path d="M -6 -14 L 0 -26 L 6 -14 Z" fill="var(--bad)"/>
+            </g>
+            <text x="120" y="188" fill="var(--bad)" font-family="monospace" font-size="9" text-anchor="middle">model faces backwards</text>
+          </svg>
+          <figcaption>
+            <span class="verdict no">Wrong</span><br>
+            <code>atan2(direction.x, direction.z)</code><br>
+            You move north, the model looks south.
+          </figcaption>
+        </figure>
+
+        <figure>
+          <svg viewBox="0 0 240 210" role="img" aria-label="Top-down view: movement arrow and character nose both point up-screen">
+            <defs>
+              <marker id="ar-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+              </marker>
+            </defs>
+            <g stroke="var(--rule)" stroke-width="1">
+              <path d="M20 120 H220 M120 24 V196"/>
+            </g>
+            <text x="222" y="115" fill="var(--muted)" font-family="monospace" font-size="9" text-anchor="end">+X</text>
+            <text x="126" y="34" fill="var(--muted)" font-family="monospace" font-size="9">-Z</text>
+            <line x1="120" y1="96" x2="120" y2="34" stroke="var(--accent)" stroke-width="2.5" marker-end="url(#ar-ok)"/>
+            <text x="130" y="62" fill="var(--accent)" font-family="monospace" font-size="9">W pressed</text>
+            <g transform="translate(120 120)">
+              <circle cx="0" cy="0" r="17" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="2"/>
+              <path d="M -6 -14 L 0 -26 L 6 -14 Z" fill="var(--ok)"/>
+            </g>
+            <text x="120" y="188" fill="var(--ok)" font-family="monospace" font-size="9" text-anchor="middle">model faces travel</text>
+          </svg>
+          <figcaption>
+            <span class="verdict yes">Right</span><br>
+            <code>atan2(-direction.x, -direction.z)</code><br>
+            Model and movement agree.
+          </figcaption>
+        </figure>
+      </div>
+
+      <p>Because the error is a half-turn, it flips <em>every</em> axis at once. That is the tell: if forward, back, left and right all look mirrored, you have one rotation bug — not four input bugs. <strong>Do not "fix" it by reversing your input actions or negating the WASD axes.</strong> Movement was never wrong; only the model's rotation was. Reversing input breaks the thing that worked and leaves the real bug in place.</p>
+
+      <p>You can check the math without running the game. Save this as <code>facing_check.gd</code> in the project root and run <code>Godot.exe --headless --path . --script res://facing_check.gd</code>:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>facing_check.gd</span><span>throwaway test</span></div>
+<pre><code>extends SceneTree
+
+func _init() -&gt; void:
+    var cases := {
+        "W (forward)": Vector3(0, 0, -1),
+        "S (back)": Vector3(0, 0, 1),
+        "A (left)": Vector3(-1, 0, 0),
+        "D (right)": Vector3(1, 0, 0),
+    }
+    for label in cases:
+        var direction: Vector3 = cases[label]
+        var yaw := atan2(-direction.x, -direction.z)
+        # -Z is the node's forward axis in Godot.
+        var facing := -Basis(Vector3.UP, yaw).z
+        var ok := facing.distance_to(direction) &lt; 0.001
+        print("%-12s want %v  faces %v  %s" % [
+            label, direction, facing.snappedf(0.001), "OK" if ok else "WRONG"
+        ])
+    quit()</code></pre>
+      </figure>
+
+      <div class="note warn">
+        <span class="tag">Use the local basis, not the global one</span>
+        <p>A first attempt at that script used <code>node.global_transform.basis</code> and printed nonsense, because a node added during <code>_init</code> is not in the tree yet and <code>global_transform</code> silently returns identity. Building a <code>Basis</code> directly, as above, needs no tree at all.</p>
+      </div>
+
+      <h3>Problem B — the model itself faces +Z</h3>
+      <p>The code is now correct, so if <em>your</em> imported model still looks backwards, the model was authored facing the other way. Many artists model characters looking down +Z; Godot expects -Z.</p>
+
+      <p><strong>Fix it in the resource, not the code:</strong> set <code>model_yaw_offset_deg = 180</code> on that character's <code>.tres</code>. This is per-character on purpose, because it varies per model — one asset pack may face +Z and the next -Z, and a code-level fix would break every model that was already correct.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/player/player.gd</span><span>where the offset is applied</span></div>
+<pre><code>model_root.add_child(instance)
+_model = instance
+
+if _data != null:
+    instance.scale = Vector3.ONE * _data.model_scale
+    instance.position = _data.model_offset
+    instance.rotation.y = deg_to_rad(_data.model_yaw_offset_deg)
+    _head_height = _data.head_height</code></pre>
+      </figure>
+
+      <h3>Telling the two apart in ten seconds</h3>
+      <ol>
+        <li>Press <strong>V</strong> to go first person, then back to third person. In first person the body locks to the camera through a separate code path, so the two problems behave differently.</li>
+        <li>Walk forward in third person and watch the <em>placeholder</em> capsule on another character — it has a small nose pointing along -Z. If the capsule faces correctly but your imported model does not, it is <strong>Problem B</strong>, and <code>model_yaw_offset_deg = 180</code> fixes it.</li>
+        <li>If even the placeholder capsule faces backwards, it is <strong>Problem A</strong> — check the <code>atan2</code> line in <code>_simulate_local</code>.</li>
+      </ol>
+    </section>
+
+    <section id="testing">
+      <h2>Testing multiplayer locally</h2>
+
+      <p>You need two running instances. There are three ways, in increasing order of usefulness.</p>
+
+      <h3>Option 1 — Godot's built-in multi-run</h3>
+      <p><em>Debug → Customize Run Instances…</em>, tick <strong>Enable Multiple Instances</strong>, set the count to 2, and press <kbd>F5</kbd>. Godot launches both windows. Simple, but both start at the main menu and you click through by hand each time.</p>
+
+      <h3>Option 2 — the quick-connect flags</h3>
+      <p>This is why <code>_apply_command_line()</code> exists. Everything after <code>--</code> is passed to the game, and the two windows go straight into the world with a character already chosen:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>PowerShell · two terminals</span><span>fastest loop</span></div>
+<pre><code># terminal 1 — the host
+&amp; "C:\Users\User\Desktop\Godot_v4.4.1-stable_win64.exe" `
+  --path "C:\Users\User\Desktop\Github\godot\3d-multiplayer-rpg" `
+  -- --host --name Host --character knight
+
+# terminal 2 — the second player
+&amp; "C:\Users\User\Desktop\Godot_v4.4.1-stable_win64.exe" `
+  --path "C:\Users\User\Desktop\Github\godot\3d-multiplayer-rpg" `
+  -- --join 127.0.0.1 --name Friend --character mage</code></pre>
+      </figure>
+
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td>--host</td><td>Host immediately on the default port.</td></tr>
+            <tr><td>--join &lt;address&gt;</td><td>Connect to that address.</td></tr>
+            <tr><td>--port &lt;n&gt;</td><td>Override port 7777.</td></tr>
+            <tr><td>--name &lt;text&gt;</td><td>Skip typing a name.</td></tr>
+            <tr><td>--character &lt;id&gt;</td><td>Skip the select screen. Omit it to stop there instead.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Option 3 — a headless dedicated server</h3>
+      <p>Add <code>--headless</code> to the host command and it runs with no window and no renderer, printing to the terminal. This is how the project was verified: run a headless host, connect a headless client, and read the log.</p>
+
+      <figure class="code">
+        <div class="code-head"><span>expected output</span><span>host terminal</span></div>
+<pre><code>[net] hosting on port 7777
+[net] spawning Host (peer 1) as 'knight' at (6.000000, 1.200000, 0.000000)
+[net] spawning Friend (peer 786287438) as 'mage' at (4.242640, 1.200000, 4.242640)
+[net] peer 786287438 left</code></pre>
+      </figure>
+
+      <p>Those three lines confirm the whole chain: the server opened, the handshake completed with the client's chosen character intact, a distinct spawn point was assigned, and disconnect cleanup ran. If you ever need to prove replication reached the client, drop a temporary <code>print()</code> into <code>Player._ready()</code> showing <code>name</code>, <code>is_multiplayer_authority()</code> and <code>character_id</code>; on a healthy two-player session each side prints both players, with authority true for exactly one.</p>
+
+      <h3>Playing with someone else</h3>
+      <ul>
+        <li><strong>Same network:</strong> the host runs <code>ipconfig</code> and shares their IPv4 address; the other player types it into the Server Address field.</li>
+        <li><strong>Over the internet:</strong> forward <strong>UDP port 7777</strong> to the host machine, and let the game through Windows Firewall when prompted. If you would rather not touch the router, a tool like Tailscale or ZeroTier puts you both on one virtual LAN and the LAN instructions then apply unchanged.</li>
+      </ul>
+    </section>
+
+    <section id="maps">
+      <h2>Designing your own maps</h2>
+
+      <h3>Is the world random?</h3>
+      <p>No — and this is worth being precise about. <code>arena.gd</code> builds the level in code, but from a <strong>fixed seed</strong>:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/maps/arena.gd</span><span>the seed</span></div>
+<pre><code>const BLOCK_SEED := 20250815
+
+func _build_obstacles() -> void:
+    var rng := RandomNumberGenerator.new()
+    rng.seed = BLOCK_SEED
+    ...</code></pre>
+      </figure>
+
+      <p>Same seed, same code, same layout — every launch, on every machine. That is deliberate: because all peers derive the identical world locally, no geometry is ever sent over the network. Change <code>BLOCK_SEED</code> and you get a different arena, but <strong>every player must be running the same build</strong>, or they will be walking through different worlds while agreeing on their coordinates.</p>
+
+      <p>The arena is scaffolding. It exists so there was something to walk around in on day one. You are meant to replace it.</p>
+
+      <h3>Hand-building a map in the editor</h3>
+      <p>The only contract a map has to satisfy is one method. Anything else is up to you.</p>
+
+      <ol>
+        <li>New scene, root type <strong>Node3D</strong>. Save as <code>res://scenes/maps/forest.tscn</code>.</li>
+        <li>Add a <strong>WorldEnvironment</strong> and a <strong>DirectionalLight3D</strong> — without them your map renders black. The quickest route is to copy those two nodes out of <code>arena.tscn</code>.</li>
+        <li>Build the geometry. Three approaches, pick per map:
+          <ul>
+            <li><strong>CSG blockout</strong> — add <code>CSGBox3D</code> / <code>CSGCylinder3D</code> nodes, tick <strong>Use Collision</strong> on each. Fastest for prototyping; not the most efficient at runtime, so treat it as temporary.</li>
+            <li><strong>Imported mesh</strong> — model in Blender, export glTF. Suffix any mesh name with <code>-col</code> and Godot generates a collision body for it on import. This is the production path.</li>
+            <li><strong>GridMap</strong> — build a MeshLibrary of tiles and paint them. Ideal for dungeons and anything modular.</li>
+          </ul>
+        </li>
+        <li>Add a <code>Node3D</code> named <strong>SpawnPoints</strong> and put several <code>Marker3D</code> children inside it, positioned where players should appear (roughly 1 m above the floor).</li>
+        <li>Attach this script to the root:</li>
+      </ol>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/maps/hand_built_map.gd</span><span>the whole contract</span></div>
+<pre><code>extends Node3D
+
+@onready var _spawns: Array[Node] = $SpawnPoints.get_children()
+
+## main.gd hands out spawn points round-robin as players join.
+func get_spawn_point(index: int) -&gt; Vector3:
+    if _spawns.is_empty():
+        return Vector3(0.0, 1.5, 0.0)
+    var marker := _spawns[index % _spawns.size()] as Marker3D
+    return marker.global_position</code></pre>
+      </figure>
+
+      <p>To use it right now, change one line in <code>main.gd</code>:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/main.gd</span><span>swap the map</span></div>
+<pre><code>const MAP_SCENE := preload("res://scenes/maps/forest.tscn")</code></pre>
+      </figure>
+
+      <div class="note">
+        <span class="tag">Collision layers</span>
+        <p>Put all static level geometry on <strong>layer 1</strong>. Players are on layer 2 and only collide with layer 1, and the third-person spring arm also only tests against layer 1 — so geometry left on the wrong layer will let the camera pass straight through walls.</p>
+      </div>
+    </section>
+
+    <section id="mapselect">
+      <h2>Adding map selection</h2>
+
+      <p>Yes, this works, and the project is already shaped for it. <strong>It is not built yet</strong> — here is the recipe, which deliberately mirrors how characters already work.</p>
+
+      <p>The one new problem is that a map is a <em>session-wide</em> choice, not a per-player one. The host picks; every client must load the same one. So the map id has to reach a client <em>before</em> it registers and starts receiving spawns.</p>
+
+      <h4>1 · A MapData resource</h4>
+      <p>Exactly the same pattern as <code>CharacterData</code>:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/map_data.gd</span><span>new file</span></div>
+<pre><code>class_name MapData
+extends Resource
+
+@export var id: String = ""
+@export var display_name: String = "Map"
+@export_multiline var description: String = ""
+@export var scene: PackedScene
+@export var preview: Texture2D
+@export var max_players: int = 16</code></pre>
+      </figure>
+
+      <p>Then add a <code>maps</code> array to <code>GameState</code> alongside <code>characters</code>, scanning <code>res://resources/maps/</code> with the same directory-scan code — including the <code>.remap</code> handling.</p>
+
+      <h4>2 · Carry the choice in the handshake</h4>
+      <p>In <code>NetworkManager</code>, store the session's map and push it to each peer the moment it connects — before the client registers:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/autoload/network_manager.gd</span><span>additions</span></div>
+<pre><code>signal session_info_received(map_id: String)
+
+var current_map_id := ""
+
+func host_game(port: int, map_id: String) -&gt; Error:
+    current_map_id = map_id
+    ...                      # unchanged from here
+
+func _on_peer_connected(peer_id: int) -&gt; void:
+    if multiplayer.is_server():
+        _receive_session_info.rpc_id(peer_id, current_map_id)
+
+@rpc("authority", "call_remote", "reliable")
+func _receive_session_info(map_id: String) -&gt; void:
+    current_map_id = map_id
+    session_info_received.emit(map_id)</code></pre>
+      </figure>
+
+      <h4>3 · Make the client wait for it</h4>
+      <p>This is the only subtle change. Today the client loads the map and registers as soon as it connects. With map selection it must wait until the server has told it <em>which</em> map:</p>
+
+      <figure class="code">
+        <div class="code-head"><span>scripts/main.gd</span><span>revised ordering</span></div>
+<pre><code>func _on_connection_succeeded() -&gt; void:
+    pass   # no longer enters the world here — wait for session info
+
+func _on_session_info_received(map_id: String) -&gt; void:
+    _enter_world(map_id)
+    NetworkManager.send_registration()
+
+func _enter_world(map_id: String) -&gt; void:
+    if _map == null:
+        var data := GameState.get_map(map_id)
+        _map = data.scene.instantiate()
+        map_root.add_child(_map)
+    hud.show()
+    Input.mouse_mode = Input.MOUSE_MODE_CAPTURED</code></pre>
+      </figure>
+
+      <p>Connect <code>NetworkManager.session_info_received</code> to <code>_on_session_info_received</code> in <code>_ready()</code>, and change <code>MAP_SCENE</code> from a <code>preload</code> constant into a lookup through <code>GameState</code>.</p>
+
+      <h4>4 · The selection screen</h4>
+      <p>Build <code>map_select.tscn</code> the same way as the character select — a row of cards, one per <code>MapData</code>. Two differences: use the <code>preview</code> texture in a <code>TextureRect</code> rather than a 3D viewport, and <strong>only show the screen when hosting</strong>. A joining player does not choose; they are told.</p>
+
+      <p>So the flow becomes:</p>
+
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Player</th><th>Screens, in order</th></tr></thead>
+          <tbody>
+            <tr><td>Host</td><td>Main menu → character select → <strong>map select</strong> → world</td></tr>
+            <tr><td>Client</td><td>Main menu → character select → world (map arrives from the host)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>Later: travelling between maps mid-session</h4>
+      <p>Once map selection works, moving a live party from a town to a dungeon is a small extension of the same machinery: the server broadcasts a "change map" RPC, every peer frees the current map and its player bodies, loads the new scene into <code>MapRoot</code>, and the server re-spawns everyone at the new map's spawn points. Because <code>Main</code>, <code>World</code> and <code>PlayerSpawner</code> never unload, the connection survives the transition untouched — which is exactly the reason the scene tree was built that way in <a href="#tree">step 1</a>.</p>
+    </section>
+
+    <section id="reference">
+      <hr class="rule-heavy">
+      <h2>Reference</h2>
+
+      <h3>Where everything lives</h3>
+      <figure class="code">
+        <div class="code-head"><span>project layout</span><span>res://</span></div>
+<pre><code>scenes/
+  main.tscn              root: screen flow + the multiplayer spawner
+  player/player.tscn     CharacterBody3D, camera rig, synchronizer
+  maps/arena.tscn        test map
+  ui/                    main_menu, character_select, hud
+scripts/
+  main.gd                screen flow, spawning, quick-connect flags
+  character_data.gd      the CharacterData resource type
+  autoload/game_state.gd character roster + local player's choices
+  autoload/network_manager.gd   ENet peer, roster, handshake
+  player/player.gd       movement, camera modes, animation
+  maps/arena.gd          procedural test-map geometry
+  ui/                    one script per screen
+resources/characters/    one .tres per playable character</code></pre>
+      </figure>
+
+      <h3>Controls</h3>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Input</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>W A S D</td><td>Move, relative to the camera</td></tr>
+            <tr><td>Mouse</td><td>Look</td></tr>
+            <tr><td>Shift</td><td>Sprint</td></tr>
+            <tr><td>Space</td><td>Jump</td></tr>
+            <tr><td>V</td><td>Switch first / third person</td></tr>
+            <tr><td>Wheel</td><td>Zoom the third-person camera</td></tr>
+            <tr><td>Esc</td><td>Pause menu, releases the mouse</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Things that will bite you</h3>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+          <tbody>
+            <tr><td>Client sees no other players</td><td>The client registered before its world existed, or <code>spawn_path</code> resolves differently on the two peers.</td></tr>
+            <tr><td>Everyone controls everyone</td><td><code>set_multiplayer_authority()</code> was called after <code>add_child()</code> instead of before.</td></tr>
+            <tr><td>Remote players teleport and stutter</td><td>Writing replicated values straight onto <code>position</code> with nothing left to interpolate towards.</td></tr>
+            <tr><td>Characters vanish in the exported build</td><td>Directory scan ignoring the <code>.remap</code> suffix.</td></tr>
+            <tr><td>Camera swings wildly in third person</td><td><code>camera_pivot.top_level</code> not set, so the camera inherits body rotation.</td></tr>
+            <tr><td>Model faces backwards</td><td>Either the <code>atan2</code> sign or a +Z-authored model — <a href="#facing">see above</a>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    3d-multiplayer-rpg · Godot 4.4.1 · Built with placeholder characters and a procedural test arena. Next up: enemies, combat, and maps of your own.
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  try {
+    var stored = localStorage.getItem('grfg-theme');
+    if (stored === 'dark' || stored === 'light') root.setAttribute('data-theme', stored);
+  } catch (e) {}
+  btn.addEventListener('click', function () {
+    var isDark = root.getAttribute('data-theme') === 'dark' ||
+      (!root.hasAttribute('data-theme') &&
+       window.matchMedia('(prefers-color-scheme: dark)').matches);
+    var next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('grfg-theme', next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>
